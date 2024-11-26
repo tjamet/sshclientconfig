@@ -2,7 +2,6 @@ package sshclientconfig
 
 import (
 	"crypto"
-	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -643,9 +642,9 @@ func TestNewPublicKeysCallback(t *testing.T) {
 	require.NoError(t, err)
 	defer l.Close()
 	require.NoError(t, err)
-	agentPrivateKey := &dsa.PrivateKey{}
-	require.NoError(t, dsa.GenerateParameters(&agentPrivateKey.Parameters, rand.Reader, dsa.L1024N160))
-	require.NoError(t, dsa.GenerateKey(agentPrivateKey, rand.Reader))
+
+	_, agentPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
 	sshAgent.Add(agent.AddedKey{PrivateKey: agentPrivateKey})
 	go func() {
 		for {
@@ -662,7 +661,7 @@ func TestNewPublicKeysCallback(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, signers, 3)
 
-		assert.Equal(t, "ssh-dss", signers[0].PublicKey().Type())
+		assert.Equal(t, "ssh-ed25519", signers[0].PublicKey().Type())
 		assert.Equal(t, "ssh-rsa", signers[1].PublicKey().Type())
 		assert.Equal(t, "ecdsa-sha2-nistp521", signers[2].PublicKey().Type())
 	})
